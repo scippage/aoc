@@ -8,7 +8,7 @@ endif
 
 LDFLAGS := -lrt -flto -fuse-ld=gold
 
-all: a b
+all: a b b_alt
 
 a: a.cc
 	$(CC) $(CFLAGS) a.cc -o a
@@ -16,5 +16,8 @@ a: a.cc
 b: b.cc
 	$(CC) $(CFLAGS) b.cc -o b
 
+b_alt: b_alt.cc
+	$(CC) $(CFLAGS) b_alt.cc -o b_alt
+
 clean:
-	rm -f a b *.o
+	rm -f a b b_alt *.o
