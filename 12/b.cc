@@ -124,7 +124,7 @@ int main() {
         damaged_lens_5x.insert(damaged_lens_5x.end(), damaged_lens.begin(), damaged_lens.end());
         std::string springs_5x = springs + '?' + springs + '?' + springs + '?' + springs + '?' + springs;
         int damaged_5x = damaged*5;
-        int changeables_5x = changeables*5;
+        int changeables_5x = changeables*5 + 4;
 
         std::map<std::pair<std::string, std::deque<int>>, int64_t> cache;
         int64_t ways = count_ways(springs_5x, damaged_5x, changeables_5x, damaged_lens_5x, cache);
