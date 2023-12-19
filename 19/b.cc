@@ -43,10 +43,10 @@ const workflow REJECT = "R";
 const workflow START = "in";
 
 struct Restriction {
-    std::list<interval> x = {std::make_pair(1, 4000)};
-    std::list<interval> m = {std::make_pair(1, 4000)};
-    std::list<interval> a = {std::make_pair(1, 4000)};
-    std::list<interval> s = {std::make_pair(1, 4000)};
+    interval x = std::make_pair(1, 4000);
+    interval m = std::make_pair(1, 4000);
+    interval a = std::make_pair(1, 4000);
+    interval s = std::make_pair(1, 4000);
     auto xmas_get(xmas xm) {
         if (xm == "x") return x;
         if (xm == "m") return m;
@@ -54,35 +54,40 @@ struct Restriction {
         if (xm == "s") return s;
         throw std::domain_error("bad xm, get");
     }
-    auto xmas_set(xmas xm, std::list<interval> xm_list) {
+    auto xmas_set(xmas xm, interval xm_interval) {
         if (xm == "x") {
-            x = xm_list;
+            x = xm_interval;
             return;
         }
         if (xm == "m") {
-            m = xm_list;
+            m = xm_interval;
             return;
         }
         if (xm == "a") {
-            a = xm_list;
+            a = xm_interval;
             return;
         }
         if (xm == "s") {
-            s = xm_list;
+            s = xm_interval;
             return;
         }
         throw std::domain_error("bad xm, set");
     }
 };
 
+std::optional<interval> intersect_intervals(interval a, interval b) {
+    auto [a1, a2] = a;
+    auto [b1, b2] = b;
+    interval intersection = std::make_pair(std::max(a1, b1), std::min(a2, b2));
+    if (intersection.first > intersection.second) return std::nullopt;
+    return intersection;
+}
+
 int64_t calc_combinations(Restriction& r) {
     int64_t ans = 1;
-    for (std::list<interval> xm : {r.x, r.m, r.a, r.s}) {
-        int64_t sum = 0;
-        for (auto& [start, end] : xm) {
-            sum += end-start+1;
-        }
-        ans *= sum;
+    for (auto xm : {r.x, r.m, r.a, r.s}) {
+        auto [start, end] = xm;
+        ans *= (end-start+1);
     }
     return ans;
 }
@@ -98,70 +103,38 @@ int64_t explore(std::map<workflow, branches>& ins, std::deque<Node>& queue, Rest
             w = w_out;
             break;
         };
-        std::list<interval> r_xm = r.xmas_get(c_xmas);
-        std::list<interval> xm_new;
+        interval r_xm = r.xmas_get(c_xmas);
+        std::optional<interval> intersection;
         if (c_op == "<") {
             // make true node (new w)
-            xm_new.clear();
-            for (auto inv : r_xm) {
-                auto [start, end] = inv;
-                if (end < c_val) {
-                    xm_new.push_back(inv);
-                } else if (start < c_val && end >= c_val) {
-                    xm_new.push_back(std::make_pair(start, c_val-1));
-                }
-            }
-            if (!xm_new.empty()) {
+            intersection = intersect_intervals(r_xm, std::make_pair(0, c_val-1));
+            if (intersection.has_value()) {
                 Restriction r_new = r;
-                r_new.xmas_set(c_xmas, xm_new);
+                r_new.xmas_set(c_xmas, intersection.value());
                 queue.push_back(std::make_pair(r_new, w_out));
-            };
+            }
 
             // make false node (update in place and move to next branch)
-            xm_new.clear();
-            for (auto inv : r_xm) {
-                auto [start, end] = inv;
-                if (start >= c_val) {
-                    xm_new.push_back(inv);
-                } else if (start < c_val && end >= c_val) {
-                    xm_new.push_back(std::make_pair(c_val, end));
-                }
-            }
-            if (!xm_new.empty()) {
-                r.xmas_set(c_xmas, xm_new);
+            intersection = intersect_intervals(r_xm, std::make_pair(c_val, 4000));
+            if (intersection.has_value()) {
+                r.xmas_set(c_xmas, intersection.value());
                 continue;
-            };
+            }
         } else if (c_op == ">") {
             // make true node (new w)
-            xm_new.clear();
-            for (auto inv : r_xm) {
-                auto [start, end] = inv;
-                if (start > c_val) {
-                    xm_new.push_back(inv);
-                } else if (start < c_val && end > c_val) {
-                    xm_new.push_back(std::make_pair(c_val+1, end));
-                }
-            }
-            if (!xm_new.empty()) {
+            intersection = intersect_intervals(r_xm, std::make_pair(c_val+1, 4000));
+            if (intersection.has_value()) {
                 Restriction r_new = r;
-                r_new.xmas_set(c_xmas, xm_new);
+                r_new.xmas_set(c_xmas, intersection.value());
                 queue.push_back(std::make_pair(r_new, w_out));
-            };
+            }
 
             // make false node (update in place and move to next branch)
-            xm_new.clear();
-            for (auto inv : r_xm) {
-                auto [start, end] = inv;
-                if (end <= c_val) {
-                    xm_new.push_back(inv);
-                } else if (start <= c_val && end > c_val) {
-                    xm_new.push_back(std::make_pair(start, c_val));
-                }
-            }
-            if (!xm_new.empty()) {
-                r.xmas_set(c_xmas, xm_new);
+            intersection = intersect_intervals(r_xm, std::make_pair(0, c_val));
+            if (intersection.has_value()) {
+                r.xmas_set(c_xmas, intersection.value());
                 continue;
-            };
+            }
         } else throw std::domain_error("invalid c_op");
     }
     queue.push_back(std::make_pair(r, w));
