@@ -3,6 +3,7 @@
 !*.md
 !.gitignore
 !*.cc
+!*.h
 !Makefile
 
 !*/
