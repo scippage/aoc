@@ -151,18 +151,19 @@ int backtrack(Graph& g, std::deque<BacktrackState>& state_queue, Vertex end) {
     return max_cost;
 }
 
-int backtrack_rec(Graph& g, std::set<Vertex> visited, Vertex u, int cost, Vertex end) {
+int backtrack_rec(Graph& g, std::set<Vertex>& visited, Vertex u, int cost, Vertex end) {
     if (u == end) return cost;
-    if (visited.contains(u)) return -1;
-    visited.insert(u);
+    if (visited.contains(u)) return 0;
 
-    int max_delta_cost = -1;
+    int max_delta_cost = 0;
     for (auto [u, v, weight]: g[u]) {
         if (!visited.contains(v)) {
+            visited.insert(u);
             max_delta_cost = std::max(max_delta_cost, backtrack_rec(g, visited, v, weight, end));
+            visited.erase(u);
         }
     }
-    if (max_delta_cost == -1) return -1;
+    if (max_delta_cost == 0) return 0;
     return cost + max_delta_cost;
 }
 
