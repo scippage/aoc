@@ -9,4 +9,7 @@
 
 !*.py
 
+!*.rs
+!Cargo.toml
+
 !*/
