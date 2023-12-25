@@ -2,8 +2,11 @@
 
 !*.md
 !.gitignore
+
 !*.cc
 !*.h
 !Makefile
+
+!*.py
 
 !*/
